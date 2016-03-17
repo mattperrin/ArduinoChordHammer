@@ -33,12 +33,12 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 void setup()
 {
   randomSeed(4321);
- // pinMode(A0, INPUT);
+  pinMode(A0, INPUT);
 
-    MIDI.begin();
+  MIDI.begin();
   Serial.begin(115200);
   
-  //ffuuuuuuu Serial.begin(9600);
+
   lcd.clear(); 
   lcd.begin(16, 2);
   lcd.setCursor(0,0); 
@@ -49,8 +49,8 @@ void setup()
 
 void loop()
 {
-  //                      4294967295
-  randomKey1_1 = random(0,999999999);
+  //                    999999999
+  randomKey1_1 = random(100000000,999999999);
   
   lcd.clear();
   lcd.setCursor(0,0);
@@ -59,5 +59,26 @@ void loop()
   lcd.setCursor(0,1);
   lcd.print((String)adc_key_in);
 
+  MIDI.sendNoteOn(48, 127, 1);
+  delay(2000);
+
+  MIDI.sendNoteOn(60, 127, 1);
   delay(1000);
+
+  MIDI.sendNoteOn(72, 127, 1);
+  delay(1000);
+
+
+  MIDI.sendNoteOff(48, 0, 1);
+  delay(2000);
+
+  MIDI.sendNoteOff(60, 0, 1);
+  delay(1000);
+
+  MIDI.sendNoteOff(72, 0, 1);
+  delay(1000);
+
+
+
+
 }
