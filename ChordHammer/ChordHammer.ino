@@ -41,14 +41,14 @@ int Seq3Octive;
 String ChordName;
 int tempo;
 
-MIDI_CREATE_DEFAULT_INSTANCE();
+//MIDI_CREATE_DEFAULT_INSTANCE();
 
 void setup()
 {
-  randomSeed(analogRead(0));
+  randomSeed(analogRead(1));
   GenerateNewKeys();
   pinMode(A0, INPUT);
-  MIDI.begin();
+  //MIDI.begin();
   Serial.begin(115200);
 
 
@@ -56,20 +56,21 @@ void setup()
   lcd.begin(16, 2);
   lcd.setCursor(0, 0);
   lcd.print("Chord Crusher v1");
-
-  delay(1500);
+  //delay(1500);
 }
 
 void loop()
 {
-
-
   lcd.clear();
+  GenerateNewKeys();
+  
   lcd.setCursor(0, 0);
   lcd.print((String)randomKey1);
-  adc_key_in = analogRead(0);
-  lcd.setCursor(0, 1);
-  lcd.print((String)adc_key_in);
+  
+  //adc_key_in = analogRead(0);
+  //lcd.setCursor(0, 1);
+  //lcd.print((String)adc_key_in);
+  
   /*
     MIDI.sendNoteOn(48, 127, 1);
     delay(2000);
@@ -89,7 +90,7 @@ void loop()
 
     MIDI.sendNoteOff(72, 0, 1);
   */
-  delay(1000);
+  delay(1000000);
 
 
 
@@ -99,19 +100,29 @@ void loop()
 
 
 void GenerateNewKeys() {
-  //                    999999999
+  //                   999999999
   randomKey1 = random(1000000000, 9999999999);
+  GenerateSequence(&randomKey1, &randomSeq1);
+  
   randomKey2 = random(1000000000, 9999999999);
+  GenerateSequence(&randomKey2, &randomSeq2);
+  
   randomKey3 = random(1000000000, 9999999999);
+  GenerateSequence(&randomKey3, &randomSeq3);
+
 }
 
-void GenerateSequence() {
-  for (uint8_t i = 0; i < 8; i++) {
-    printf("%d\n", bitRead( bla, i ));
-  }
-
-
+void GenerateSequence(unsigned long *randomKey, byte[] *sequence) 
+{
+  //String outputString = "";
   
+  for (uint8_t i = 0; i < 16; i++) {
+    //outputString = (String)bitRead( randomKey1, i ) + outputString;
+    sequence[15 - i] = (byte)bitRead( randomKey, i )
+  }
+  
+  //lcd.setCursor(0, 1);
+  //lcd.print(outputString);
 }
 
 
