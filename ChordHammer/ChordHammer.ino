@@ -43,6 +43,7 @@ int Seq3Octive;
 String chord;
 int tempo;
 
+<<<<<<< HEAD
 // 0 Main
 // 1 Seq1
 // 2 Seq2
@@ -53,26 +54,35 @@ int maxScreen = 3;
 unsigned long buttonMillis;
 
 MIDI_CREATE_DEFAULT_INSTANCE();
+=======
+//MIDI_CREATE_DEFAULT_INSTANCE();
+>>>>>>> origin/master
 
 void setup()
 {
-  randomSeed(analogRead(0));
+  randomSeed(analogRead(1));
   GenerateNewKeys();
   pinMode(A0, INPUT);
-  MIDI.begin();
+  //MIDI.begin();
   Serial.begin(115200);
 
 
   lcd.clear();
   lcd.begin(16, 2);
   lcd.setCursor(0, 0);
+<<<<<<< HEAD
   lcd.print("Chord Hammer");
   delay(1000);
   lcd.clear();
+=======
+  lcd.print("Chord Crusher v1");
+  //delay(1500);
+>>>>>>> origin/master
 }
 
 void loop()
 {
+<<<<<<< HEAD
   DetectKeypress();
   lcd.clear();
   DisplayOnLcd(currentScreen);
@@ -85,6 +95,18 @@ void loop()
   //lcd.print((String)adc_key_in);
 
   delay(100);
+=======
+  lcd.clear();
+  GenerateNewKeys();
+  
+  lcd.setCursor(0, 0);
+  lcd.print((String)randomKey1);
+  
+  //adc_key_in = analogRead(0);
+  //lcd.setCursor(0, 1);
+  //lcd.print((String)adc_key_in);
+  
+>>>>>>> origin/master
   /*
     MIDI.sendNoteOn(48, 127, 1);
     delay(2000);
@@ -104,8 +126,12 @@ void loop()
 
     MIDI.sendNoteOff(72, 0, 1);
   */
+<<<<<<< HEAD
   //delay(1000);
 }
+=======
+  delay(1000000);
+>>>>>>> origin/master
 
 
 void DetectKeypress()
@@ -191,6 +217,7 @@ void DisplayOnLcd(int dataRow)
 void GenerateNewKeys() {
   //                   999999999
   randomKey1 = random(1000000000, 9999999999);
+<<<<<<< HEAD
   for (uint8_t i = 0; i < 16; i++) {
     randomSeq1[15 - i] = (byte)bitRead( randomKey1, i );
   }
@@ -204,6 +231,29 @@ void GenerateNewKeys() {
   for (uint8_t i = 0; i < 16; i++) {
     randomSeq3[15 - i] = (byte)bitRead( randomKey3, i );
   }
+=======
+  GenerateSequence(&randomKey1, &randomSeq1);
+  
+  randomKey2 = random(1000000000, 9999999999);
+  GenerateSequence(&randomKey2, &randomSeq2);
+  
+  randomKey3 = random(1000000000, 9999999999);
+  GenerateSequence(&randomKey3, &randomSeq3);
+
+}
+
+void GenerateSequence(unsigned long *randomKey, byte[] *sequence) 
+{
+  //String outputString = "";
+  
+  for (uint8_t i = 0; i < 16; i++) {
+    //outputString = (String)bitRead( randomKey1, i ) + outputString;
+    sequence[15 - i] = (byte)bitRead( randomKey, i )
+  }
+  
+  //lcd.setCursor(0, 1);
+  //lcd.print(outputString);
+>>>>>>> origin/master
 }
 
 
