@@ -8,6 +8,7 @@
   LCD D7 pin to digital pin 7
   LCD BL pin to digital pin 10
   KEY pin to analog pin 0        (14)  THIS IS THE BUTTON PIN
+  http://www.electronics.dit.ie/staff/tscarff/Music_technology/midi/midi_note_numbers_for_octaves.htm
 */
 #include <MIDI.h>
 #include <Wire.h>
@@ -34,14 +35,19 @@ byte randomSeq1[16];
 byte randomSeq2[16];
 byte randomSeq3[16];
 
-int Seq1Pitch;
+// THIS SHOULD BE C MAJOR, hardcoding in octive
+int Seq1Pitch = 60;
+int Seq2Pitch = 64;
+int Seq3Pitch = 67;
+
+// -1 turns off channel
 int Seq1Octive;
-int Seq2Pitch;
 int Seq2Octive;
-int Seq3Pitch;
 int Seq3Octive;
+
+
 String chord;
-int tempo;
+int bpmTempo;
 int midiChannel;
 bool sustain;
 
@@ -49,57 +55,86 @@ int currentScreen = 0;
 int maxScreen = 4;
 
 unsigned long buttonMillis;
+unsigned long currentMillis;
+unsigned long previousMillis;
+unsigned long differenceTiming;
+int sixteenInterval = 0;
+int intervalCounter = 0;
+
 
 MIDI_CREATE_DEFAULT_INSTANCE();
 
-
 void setup()
 {
-  randomSeed(analogRead(1));
-  GenerateNewKeys();
+  randomSeed(4321);
   pinMode(A0, INPUT);
-  //MIDI.begin();
+
+  MIDI.begin();
   Serial.begin(115200);
+ 
+
+  GenerateNewKeys();
+
 
 
   lcd.clear();
   lcd.begin(16, 2);
   lcd.setCursor(0, 0);
   lcd.print("Chord Crusher v1");
+
+  sixteenInterval = ((1000 / (int)bpmTempo) * 60 / 2) / 4;
   delay(1000);
 }
 
 void loop()
 {
-  DetectKeypress();
-  lcd.clear();
-  DisplayOnLcd(currentScreen);
+  //DetectKeypress();
+  //lcd.clear();
+  //DisplayOnLcd(currentScreen);
 
-  //adc_key_in = analogRead(0);
-  //lcd.setCursor(0, 1);
-  //lcd.print((String)adc_key_in);
+int note1 = random(1, 120);
+int note2 = random(1, 120);
+int note3 = random(1, 120);
 
+  MIDI.sendNoteOn(note1, 127, 1);
+  delay(300);
+
+  MIDI.sendNoteOn(note2, 127, 1);
+  delay(1000);
+
+
+
+  MIDI.sendNoteOff(note1, 0, 1);
+  delay(300);
+
+MIDI.sendNoteOn(note3, 127, 1);
   delay(100);
+  
+  MIDI.sendNoteOff(note2, 0, 1);
+  delay(1000);
 
-  /*
-    MIDI.sendNoteOn(48, 127, 1);
-    delay(2000);
+  MIDI.sendNoteOff(note3, 0, 1);
+  delay(500);
+/*
+  currentMillis = millis();
+  differenceTiming = currentMillis - previousMillis;
+  if (differenceTiming >= sixteenInterval)
+  {
+    if (randomSeq1[intervalCounter] == B1) {
+      MIDI.sendNoteOn(60, 127, 1);
+    }
 
-    MIDI.sendNoteOn(60, 127, 1);
-    delay(1000);
+    intervalCounter++;
+    if (intervalCounter == 16)
+    {
+      intervalCounter = 0;
+    }
+    previousMillis = currentMillis;
+  }
 
-    MIDI.sendNoteOn(72, 127, 1);
-    delay(1000);
+*/
 
 
-    MIDI.sendNoteOff(48, 0, 1);
-    delay(2000);
-
-    MIDI.sendNoteOff(60, 0, 1);
-    delay(1000);
-
-    MIDI.sendNoteOff(72, 0, 1);
-  */
 
 }
 
@@ -155,7 +190,7 @@ void DisplayOnLcd(int dataRow)
     case 0:
       lcd.print("Chord:" + chord);
       lcd.setCursor(0, 1);
-      lcd.print("BPM:" + (String)tempo);
+      lcd.print("BPM:" + (String)bpmTempo);
       break;
 
     case 1:
@@ -206,5 +241,29 @@ void GenerateNewKeys() {
   }
 }
 
+
+  //adc_key_in = analogRead(0);
+  //lcd.setCursor(0, 1);
+  //lcd.print((String)adc_key_in);
+  //delay(100);
+  /*
+    MIDI.sendNoteOn(48, 127, 1);
+    delay(2000);
+
+    MIDI.sendNoteOn(60, 127, 1);
+    delay(1000);
+
+    MIDI.sendNoteOn(72, 127, 1);
+    delay(1000);
+
+
+    MIDI.sendNoteOff(48, 0, 1);
+    delay(2000);
+
+    MIDI.sendNoteOff(60, 0, 1);
+    delay(1000);
+
+    MIDI.sendNoteOff(72, 0, 1);
+  */
 
 
