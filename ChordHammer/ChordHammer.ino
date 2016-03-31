@@ -100,21 +100,21 @@ int note3 = random(1, 120);
   delay(300);
 
   MIDI.sendNoteOn(note2, 127, 1);
-  delay(1000);
+  //delay(1000);
 
 
 
-  MIDI.sendNoteOff(note1, 0, 1);
+  //MIDI.sendNoteOff(note1, 0, 1);
   delay(300);
 
 MIDI.sendNoteOn(note3, 127, 1);
-  delay(100);
+  //delay(100);
   
-  MIDI.sendNoteOff(note2, 0, 1);
-  delay(1000);
+  //MIDI.sendNoteOff(note2, 0, 1);
+  //delay(1000);
 
-  MIDI.sendNoteOff(note3, 0, 1);
-  delay(500);
+  //MIDI.sendNoteOff(note3, 0, 1);
+  //delay(500);
 /*
   currentMillis = millis();
   differenceTiming = currentMillis - previousMillis;
