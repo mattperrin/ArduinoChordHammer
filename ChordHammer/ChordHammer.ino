@@ -91,10 +91,10 @@ void loop()
   //DetectKeypress();
   //lcd.clear();
   //DisplayOnLcd(currentScreen);
-
-int note1 = random(1, 120);
-int note2 = random(1, 120);
-int note3 = random(1, 120);
+  
+  int note1 = random(1, 120);
+  int note2 = random(1, 120);
+  int note3 = random(1, 120);
 
   MIDI.sendNoteOn(note1, 127, 1);
   delay(300);
