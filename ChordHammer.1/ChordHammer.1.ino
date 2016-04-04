@@ -15,7 +15,6 @@
 #include <LiquidCrystal.h>
 LiquidCrystal lcd(8, 13, 9, 4, 5, 6, 7);
 
-
 int adc_key_in;
 unsigned long randomKey1;
 unsigned long randomKey2;
@@ -24,35 +23,37 @@ byte randomSeq1[16];
 byte randomSeq2[16];
 byte randomSeq3[16];
 
-// THIS SHOULD BE C MAJOR, hardcoding in octive
 int Seq1Pitch;
 int Seq2Pitch;
 int Seq3Pitch;
 
-// -1 turns off channel
-int Seq1Octive = 4;
-int Seq2Octive = 4;
-int Seq3Octive = 4;
+// -1 turns off Sequence
+int Seq1Octive = 5;
+int Seq2Octive = 5;
+int Seq3Octive = 5;
 
+// -1 turns off Sequence
 int Seq1Velocity = 127;
 int Seq2Velocity = 127;
 int Seq3Velocity = 127;
 
+bool Seq1On = false;
+bool Seq2On = false;
+bool Seq3On = false;
+
 /*
-   0 - Individiual
-   1 - Sustain
-   2 - Decay
-   3 - Portamento
-   4 - Arpeggio
-   5 - TestMode
+   0 - Staccato
+   1 - Tie
+   2 - Portamento
+   3 - TestMode
+   4 - Chaos
 */
-int playMode = 5;
+int playMode = 3;
 int bpmTempo = 120;
 int midiChannel = 1;
 
 int baseChord;
 String chordName;
-
 
 /*
    1 - 1/4
@@ -107,12 +108,12 @@ void setup()
   MIDI.begin();
   Serial.begin(115200);
 
-  GenerateKey1;
-  GenerateSeq1;
-  GenerateKey2;
-  GenerateSeq2;
-  GenerateKey3;
-  GenerateSeq3;
+  GenerateKey1();
+  GenerateSeq1();
+  GenerateKey2();
+  GenerateSeq2();
+  GenerateKey3();
+  GenerateSeq3();
 
   lcd.clear();
   lcd.begin(16, 2);
@@ -139,13 +140,85 @@ void loop()
   differenceTiming = currentMillis - previousMillis;
   if (differenceTiming >= sixteenInterval)
   {
+    switch (playMode)
+    {
+      case 0:
+        //STACCATO
+        if (Seq1On) {
+          MIDI.sendNoteOff(Seq1Pitch, Seq1Velocity, midiChannel);
+          Seq1On = false;
+        }
+        if (Seq2On) {
+          MIDI.sendNoteOff(Seq2Pitch, Seq2Velocity, midiChannel);
+          Seq2On = false;
+        }
+        if (Seq3On) {
+          MIDI.sendNoteOff(Seq3Pitch, Seq3Velocity, midiChannel);
+          Seq3On = false;
+        }
 
-    MIDI.sendNoteOn(Seq1Pitch, Seq1Velocity, midiChannel);
-    MIDI.sendNoteOn(Seq2Pitch, Seq2Velocity, midiChannel);
-    MIDI.sendNoteOn(Seq3Pitch, Seq3Velocity, midiChannel);
+        if (randomSeq1[intervalCounter] == B1) {
+          MIDI.sendNoteOn(Seq1Pitch, Seq1Velocity, midiChannel);
+          Seq1On = true;
+        }
+        if (randomSeq2[intervalCounter] == B1) {
+          MIDI.sendNoteOn(Seq2Pitch, Seq2Velocity, midiChannel);
+          Seq1On = true;
+        }
+        if (randomSeq3[intervalCounter] == B1) {
+          MIDI.sendNoteOn(Seq3Pitch, Seq3Velocity, midiChannel);
+          Seq1On = true;
+        }
+        break;
 
-    if (randomSeq1[intervalCounter] == B1) {
-      // DO NADA
+      case 1:
+        //TIE
+        if (randomSeq1[intervalCounter] == B1 && Seq1On != true) {
+          MIDI.sendNoteOn(Seq1Pitch, Seq1Velocity, midiChannel);
+          Seq1On = true;
+        }
+        if (randomSeq1[intervalCounter] != B1) {
+          MIDI.sendNoteOff(Seq1Pitch, Seq1Velocity, midiChannel);
+          Seq1On = false;
+        }
+
+        if (randomSeq2[intervalCounter] == B1 && Seq2On != true) {
+          MIDI.sendNoteOn(Seq2Pitch, Seq2Velocity, midiChannel);
+          Seq2On = true;
+        }
+        if (randomSeq2[intervalCounter] != B1) {
+          MIDI.sendNoteOff(Seq2Pitch, Seq2Velocity, midiChannel);
+          Seq2On = false;
+        }
+
+        if (randomSeq3[intervalCounter] == B1 && Seq3On != true) {
+          MIDI.sendNoteOn(Seq3Pitch, Seq3Velocity, midiChannel);
+          Seq3On = true;
+        }
+        if (randomSeq3[intervalCounter] != B1) {
+          MIDI.sendNoteOff(Seq3Pitch, Seq3Velocity, midiChannel);
+          Seq3On = false;
+        }
+        break;
+
+      case 2:
+        //PORTAMENTO
+        // NOT IMPLEMENTED YET
+        break;
+
+      case 3:
+        // TEST
+        MIDI.sendNoteOn(Seq1Pitch, Seq1Velocity, midiChannel);
+        MIDI.sendNoteOn(Seq2Pitch, Seq2Velocity, midiChannel);
+        MIDI.sendNoteOn(Seq3Pitch, Seq3Velocity, midiChannel);
+        break;
+
+      case 4:
+        // CHAOS
+        MIDI.sendNoteOn(random(0, 127), Seq1Velocity, midiChannel);
+        MIDI.sendNoteOn(random(0, 127), Seq2Velocity, midiChannel);
+        MIDI.sendNoteOn(random(0, 127), Seq3Velocity, midiChannel);
+        break;
     }
 
     intervalCounter++;
@@ -165,11 +238,15 @@ void DetectKeypress()
 
   if (adc_key_in > 1000) { // IDLE
     buttonDown = false;
+    return;
   }
 
   if (buttonDown == false)
   {
     if (adc_key_in > 730) { //SELECT button
+      SelectValue();
+      buttonDown = true;
+      updateScreen = true;
     }
     else if (adc_key_in > 490) { //LEFT
       buttonDown = true;
@@ -233,7 +310,7 @@ void IncreaseValue()
 
     case 2:// - playMode
       playMode += 1;
-      if (playMode > 5) {
+      if (playMode > 4) {
         playMode = 0;
       }
       break;
@@ -264,7 +341,7 @@ void IncreaseValue()
       if (Seq1Pitch > 127) {
         Seq1Pitch = 0;
       }
-      chordName = "?" + chordName;
+      chordName = "Modified";
       break;
 
     case 8:// - Seq1Octive
@@ -295,7 +372,7 @@ void IncreaseValue()
       if (Seq2Pitch > 127) {
         Seq2Pitch = 0;
       }
-      chordName = "?" + chordName;
+      chordName = "Modified";
       break;
 
     case 13:// - Seq2Octive
@@ -326,7 +403,7 @@ void IncreaseValue()
       if (Seq3Pitch > 127) {
         Seq3Pitch = 0;
       }
-      chordName = "?" + chordName;
+      chordName = "Modified";
       break;
 
     case 18:// - Seq3Octive
@@ -381,7 +458,7 @@ void DecreaseValue()
     case 2:// - playMode
       playMode -= 1;
       if (playMode < 0) {
-        playMode = 5;
+        playMode = 4;
       }
       break;
 
@@ -411,7 +488,7 @@ void DecreaseValue()
       if (Seq1Pitch < 0) {
         Seq1Pitch = 127;
       }
-      chordName = "?" + chordName;
+      chordName = "Modified";
       break;
 
     case 8:// - Seq1Octive
@@ -442,7 +519,7 @@ void DecreaseValue()
       if (Seq2Pitch < 0) {
         Seq2Pitch = 127;
       }
-      chordName = "?" + chordName;
+      chordName = "Modified";
       break;
 
     case 13:// - Seq2Octive
@@ -473,7 +550,7 @@ void DecreaseValue()
       if (Seq3Pitch < 0) {
         Seq3Pitch = 127;
       }
-      chordName = "?" + chordName;
+      chordName = "Modified";
       break;
 
     case 18:// - Seq3Octive
@@ -493,12 +570,48 @@ void DecreaseValue()
   }
 }
 
+void SelectValue()
+{
+  switch (currentScreen)
+  {
+    case 5:// - randomKey1
+      GenerateKey1();
+      GenerateSeq1();
+      break;
+
+    case 6:// - randomSeq1
+      GenerateKey1();
+      GenerateSeq1();
+      break;
+
+    case 10:// - randomKey2
+      GenerateKey2();
+      GenerateSeq2();
+      break;
+
+    case 11:// - randomSeq2
+      GenerateKey2();
+      GenerateSeq2();
+      break;
+
+    case 15:// - randomKey3
+      GenerateKey3();
+      GenerateSeq3();
+      break;
+
+    case 16:// - randomSeq3
+      GenerateKey3();
+      GenerateSeq3();
+      break;
+  }
+}
 
 
 
 
 void DisplayOnLcd()
 {
+  String outStr;
   updateScreen = false;
   lcd.setCursor(0, 0);
   switch (currentScreen)
@@ -506,7 +619,7 @@ void DisplayOnLcd()
     case 0:// - midiChannel
       lcd.print("Settings");
       lcd.setCursor(0, 1);
-      lcd.print("Channel: " + (String)midiChannel);
+      lcd.print("MidiChannel: " + (String)midiChannel);
       break;
 
     case 1:// - noteLength
@@ -518,7 +631,29 @@ void DisplayOnLcd()
     case 2:// - playMode
       lcd.print("Settings");
       lcd.setCursor(0, 1);
-      lcd.print("Play Mode: " + (String)playMode);
+
+      switch (playMode)
+      {
+        case 0:
+          lcd.print("Play Mode: Staccato");
+          break;
+
+        case 1:
+          lcd.print("Play Mode: Tie");
+          break;
+
+        case 2:
+          lcd.print("Play Mode: Portamento");
+          break;
+
+        case 3:
+          lcd.print("Play Mode: Testing");
+          break;
+
+        case 4:
+          lcd.print("Play Mode: Chaos");
+          break;
+      }
       break;
 
     case 3:// - chord
@@ -536,13 +671,16 @@ void DisplayOnLcd()
     case 5:// - randomKey1
       lcd.print("Sequence 1");
       lcd.setCursor(0, 1);
-      lcd.print("Key:" + (String)randomKey1);
+      lcd.print("Key: " + (String)randomKey1);
       break;
 
     case 6:// - randomSeq1
       lcd.print("Sequence 1");
       lcd.setCursor(0, 1);
-      lcd.print("Seq:");// + (String)randomSeq1);
+      for (uint8_t i = 0; i < 16; i++) {
+        outStr = (String)bitRead( randomKey1, i ) + outStr;
+      }
+      lcd.print(outStr);
       break;
 
     case 7:// - Seq1Pitch
@@ -566,13 +704,16 @@ void DisplayOnLcd()
     case 10:// - randomKey2
       lcd.print("Sequence 2");
       lcd.setCursor(0, 1);
-      lcd.print("Key:" + (String)randomKey2);
+      lcd.print("Key: " + (String)randomKey2);
       break;
 
     case 11:// - randomSeq2
       lcd.print("Sequence 2");
       lcd.setCursor(0, 1);
-      lcd.print("Seq:");// + (String)randomSeq2);
+      for (uint8_t i = 0; i < 16; i++) {
+        outStr = (String)bitRead( randomKey2, i ) + outStr;
+      }
+      lcd.print(outStr);
       break;
 
     case 12:// - Seq2Pitch
@@ -596,13 +737,16 @@ void DisplayOnLcd()
     case 15:// - randomKey3
       lcd.print("Sequence 3");
       lcd.setCursor(0, 1);
-      lcd.print("Key:" + (String)randomKey3);
+      lcd.print("Key: " + (String)randomKey3);
       break;
 
     case 16:// - randomSeq3
       lcd.print("Sequence 3");
       lcd.setCursor(0, 1);
-      lcd.print("Seq:");// + (String)randomSeq3);
+      for (uint8_t i = 0; i < 16; i++) {
+        outStr = (String)bitRead( randomKey3, i ) + outStr;
+      }
+      lcd.print(outStr);
       break;
 
     case 17:// - Seq3Pitch
@@ -667,29 +811,29 @@ void GenerateSeq3()
 void SetMajor(int basePitch)
 {
   Seq1Pitch = basePitch + (12 * Seq1Octive);
-  Seq2Pitch = Seq1Pitch + 4 + (12 * Seq2Octive);
-  Seq3Pitch = Seq1Pitch + 7 + (12 * Seq3Octive);
+  Seq2Pitch = basePitch + 4 + (12 * Seq2Octive);
+  Seq3Pitch = basePitch + 7 + (12 * Seq3Octive);
 }
 
 void SetMinor(int basePitch)
 {
   Seq1Pitch = basePitch + (12 * Seq1Octive);
-  Seq2Pitch = Seq1Pitch + 3 + (12 * Seq2Octive);
-  Seq3Pitch = Seq1Pitch + 7 + (12 * Seq3Octive);
+  Seq2Pitch = basePitch + 3 + (12 * Seq2Octive);
+  Seq3Pitch = basePitch + 7 + (12 * Seq3Octive);
 }
 
 void SetAugmented(int basePitch)
 {
   Seq1Pitch = basePitch + (12 * Seq1Octive);
-  Seq2Pitch = Seq1Pitch + 4 + (12 * Seq2Octive);
-  Seq3Pitch = Seq1Pitch + 8 + (12 * Seq3Octive);
+  Seq2Pitch = basePitch + 4 + (12 * Seq2Octive);
+  Seq3Pitch = basePitch + 8 + (12 * Seq3Octive);
 }
 
 void SetDiminished(int basePitch)
 {
   Seq1Pitch = basePitch + (12 * Seq1Octive);
-  Seq2Pitch = Seq1Pitch + 3 + (12 * Seq2Octive);
-  Seq3Pitch = Seq1Pitch + 6 + (12 * Seq3Octive);
+  Seq2Pitch = basePitch + 3 + (12 * Seq2Octive);
+  Seq3Pitch = basePitch + 6 + (12 * Seq3Octive);
 }
 
 void SetSeventh(int basePitch)
