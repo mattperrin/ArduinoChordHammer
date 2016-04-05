@@ -15,7 +15,7 @@
 #include <LiquidCrystal.h>
 LiquidCrystal lcd(8, 13, 9, 4, 5, 6, 7);
 
-int adc_key_in;
+//int adc_key_in;
 unsigned long randomKey1;
 unsigned long randomKey2;
 unsigned long randomKey3;
@@ -33,9 +33,9 @@ int Seq2Octive = 5;
 int Seq3Octive = 5;
 
 // -1 turns off Sequence
-int Seq1Velocity = 127;
-int Seq2Velocity = 127;
-int Seq3Velocity = 127;
+int Seq1Velocity = 120;
+int Seq2Velocity = 120;
+int Seq3Velocity = 120;
 
 bool Seq1On = false;
 bool Seq2On = false;
@@ -47,6 +47,7 @@ bool Seq3On = false;
    2 - Portamento
    3 - TestMode
    4 - Chaos
+   5 - Reset
 */
 int playMode = 3;
 int bpmTempo = 120;
@@ -234,7 +235,7 @@ void loop()
 void DetectKeypress()
 {
   // right = 0, up 141, left 503, down 326, select 740, idle 1023
-  adc_key_in = analogRead(0);
+  int adc_key_in = analogRead(0);
 
   if (adc_key_in > 1000) { // IDLE
     buttonDown = false;
@@ -310,7 +311,7 @@ void IncreaseValue()
 
     case 2:// - playMode
       playMode += 1;
-      if (playMode > 4) {
+      if (playMode > 5) {
         playMode = 0;
       }
       break;
@@ -342,6 +343,7 @@ void IncreaseValue()
         Seq1Pitch = 0;
       }
       chordName = "Modified";
+      RecalculateOctive1();
       break;
 
     case 8:// - Seq1Octive
@@ -373,6 +375,7 @@ void IncreaseValue()
         Seq2Pitch = 0;
       }
       chordName = "Modified";
+      RecalculateOctive2();
       break;
 
     case 13:// - Seq2Octive
@@ -404,6 +407,7 @@ void IncreaseValue()
         Seq3Pitch = 0;
       }
       chordName = "Modified";
+      RecalculateOctive3();
       break;
 
     case 18:// - Seq3Octive
@@ -458,7 +462,7 @@ void DecreaseValue()
     case 2:// - playMode
       playMode -= 1;
       if (playMode < 0) {
-        playMode = 4;
+        playMode = 5;
       }
       break;
 
@@ -489,6 +493,7 @@ void DecreaseValue()
         Seq1Pitch = 127;
       }
       chordName = "Modified";
+      RecalculateOctive1();
       break;
 
     case 8:// - Seq1Octive
@@ -520,6 +525,7 @@ void DecreaseValue()
         Seq2Pitch = 127;
       }
       chordName = "Modified";
+      RecalculateOctive2();
       break;
 
     case 13:// - Seq2Octive
@@ -551,6 +557,7 @@ void DecreaseValue()
         Seq3Pitch = 127;
       }
       chordName = "Modified";
+      RecalculateOctive3();
       break;
 
     case 18:// - Seq3Octive
@@ -574,6 +581,15 @@ void SelectValue()
 {
   switch (currentScreen)
   {
+    case 2: // playmode
+      if (playMode == 5) {
+        // RESET MIDI
+        for (int i = 0; i <= 127; i++) {
+          MIDI.sendNoteOff(i, 0, midiChannel);
+        }
+      }
+      break;
+
     case 5:// - randomKey1
       GenerateKey1();
       GenerateSeq1();
@@ -652,6 +668,10 @@ void DisplayOnLcd()
 
         case 4:
           lcd.print("Play Mode: Chaos");
+          break;
+
+        case 5:
+          lcd.print("Reset Midi Channel?");
           break;
       }
       break;
@@ -807,6 +827,21 @@ void GenerateSeq3()
   }
 }
 
+
+void RecalculateOctive1()
+{
+  Seq1Octive = Seq1Pitch / 12;
+}
+
+void RecalculateOctive2()
+{
+  Seq2Octive = Seq2Pitch / 12;
+}
+
+void RecalculateOctive3()
+{
+  Seq3Octive = Seq3Pitch / 12;
+}
 
 void SetMajor(int basePitch)
 {
@@ -1087,6 +1122,9 @@ void GenerateChord()
       break;
   }
 }
+
+
+
 
 
 
