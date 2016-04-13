@@ -107,8 +107,6 @@ int playMode1 = 1;
 int playMode2 = 1;
 int playMode3 = 1;
 int playMode4 = 1;
-int maxPlayMode = 8;
-
 
 int bpmTempo = 120;
 int midiChannel = 1;
@@ -118,12 +116,6 @@ int baseChord1;
 int baseChord2;
 int baseChord3;
 int baseChord4;
-
-// -1 modified
-int chordName1;
-int chordName2;
-int chordName3;
-int chordName4;
 
 /*
    1 - 1/4
@@ -159,7 +151,7 @@ int noteLength = 1;
 */
 
 int currentScreen = 0;
-int maxScreen = 19;
+//int maxScreen = 19;
 bool updateScreen = true;
 
 bool buttonDown = false;
@@ -193,11 +185,6 @@ void setup()
   baseChord3 = 0;
   baseChord4 = 0;
 
-  chordName1 = 0;
-  chordName2 = 0;
-  chordName3 = 0;
-  chordName4 = 0;
-
   GenerateChord();
 
   sixteenInterval = (60000 / bpmTempo) / noteLength;
@@ -211,13 +198,31 @@ void loop()
   if (updateScreen == true) {
     lcd.clear();
     DisplayOnLcd();
+    updateScreen = false;
   }
 
   currentMillis = millis();
   differenceTiming = currentMillis - previousMillis;
   if (differenceTiming >= sixteenInterval)
   {
-    switch (playMode1)
+    int currentPlayMode;
+    switch (activeSeq) //THIS NEEDS MOVED OUT INTO EVENT
+    {
+      case 1:
+        currentPlayMode = playMode1;
+        break;
+      case 2:
+        currentPlayMode = playMode2;
+        break;
+      case 3:
+        currentPlayMode = playMode3;
+        break;
+      case 4:
+        currentPlayMode = playMode4;
+        break;
+    }
+
+    switch (currentPlayMode)
     {
       case 0: // RESET
         break;
@@ -507,6 +512,61 @@ int GetSequencePitch(int seqNumber)
   }
 }
 
+int GetSequenceOctive(int seqNumber)
+{
+  switch (activeSeq)
+  {
+    case 1:
+      switch (seqNumber)
+      {
+        case 1:
+          return Seq11Octive;
+        case 2:
+          return Seq12Octive;
+        case 3:
+          return Seq13Octive;
+      }
+      break;
+
+    case 2:
+      switch (seqNumber)
+      {
+        case 1:
+          return Seq21Octive;
+        case 2:
+          return Seq22Octive;
+        case 3:
+          return Seq23Octive;
+      }
+      break;
+
+    case 3:
+      switch (seqNumber)
+      {
+        case 1:
+          return Seq31Octive;
+        case 2:
+          return Seq32Octive;
+        case 3:
+          return Seq33Octive;
+      }
+      break;
+
+    case 4:
+      switch (seqNumber)
+      {
+        case 1:
+          return Seq41Octive;
+        case 2:
+          return Seq42Octive;
+        case 3:
+          return Seq43Octive;
+      }
+      break;
+  }
+}
+
+
 int GetSequenceVelocity(int seqNumber)
 {
   switch (activeSeq)
@@ -575,25 +635,25 @@ void DetectKeypress()
 
   if (buttonDown == false)
   {
-    if (adc_key_in > 730) { //SELECT button
+    if (adc_key_in > 710) { //SELECT button
       SelectValue();
       buttonDown = true;
       updateScreen = true;
     }
-    else if (adc_key_in > 490) { //LEFT
+    else if (adc_key_in > 470) { //LEFT
       buttonDown = true;
       updateScreen = true;
       currentScreen -= 1;
-      if (currentScreen < 0) {
-        currentScreen = maxScreen;
+      if (currentScreen < -1) {
+        currentScreen = 19;
       }
     }
-    else if (adc_key_in > 310) { //DOWN
+    else if (adc_key_in > 290) { //DOWN
       DecreaseValue();
       buttonDown = true;
       updateScreen = true;
     }
-    else if (adc_key_in > 130) { //UP
+    else if (adc_key_in > 110) { //UP
       IncreaseValue();
       buttonDown = true;
       updateScreen = true;
@@ -602,7 +662,7 @@ void DetectKeypress()
       buttonDown = true;
       updateScreen = true;
       currentScreen += 1;
-      if (currentScreen > maxScreen) {
+      if (currentScreen > 19) {
         currentScreen = 0;
       }
     }
@@ -659,28 +719,28 @@ void IncreaseValue()
       {
         case 1:
           playMode1 += 1;
-          if (playMode1 > maxPlayMode) {
+          if (playMode1 > 8) {
             playMode1 = 0;
           }
           break;
 
         case 2:
           playMode2 += 1;
-          if (playMode2 > maxPlayMode) {
+          if (playMode2 > 8) {
             playMode2 = 0;
           }
           break;
 
         case 3:
           playMode3 += 1;
-          if (playMode3 > maxPlayMode) {
+          if (playMode3 > 8) {
             playMode3 = 0;
           }
           break;
 
         case 4:
           playMode4 += 1;
-          if (playMode4 > maxPlayMode) {
+          if (playMode4 > 8) {
             playMode4 = 0;
           }
           break;
@@ -734,7 +794,7 @@ void IncreaseValue()
           if (Seq11Pitch > 127) {
             Seq11Pitch = 0;
           }
-          chordName1 = -1; //MODIFIED
+          baseChord1 = -1; //MODIFIED
           RecalculateOctive(1, 1);
           break;
 
@@ -743,7 +803,7 @@ void IncreaseValue()
           if (Seq21Pitch > 127) {
             Seq21Pitch = 0;
           }
-          chordName2 = -1; //MODIFIED
+          baseChord2 = -1; //MODIFIED
           RecalculateOctive(2, 1);
           break;
 
@@ -752,7 +812,7 @@ void IncreaseValue()
           if (Seq31Pitch > 127) {
             Seq31Pitch = 0;
           }
-          chordName3 = -1; //MODIFIED
+          baseChord3 = -1; //MODIFIED
           RecalculateOctive(3, 1);
           break;
 
@@ -761,7 +821,7 @@ void IncreaseValue()
           if (Seq41Pitch > 127) {
             Seq41Pitch = 0;
           }
-          chordName4 = -1; //MODIFIED
+          baseChord4 = -1; //MODIFIED
           RecalculateOctive(4, 1);
           break;
       }
@@ -847,7 +907,7 @@ void IncreaseValue()
           if (Seq12Pitch > 127) {
             Seq12Pitch = 0;
           }
-          chordName1 = -1; //MODIFIED
+          baseChord1 = -1; //MODIFIED
           RecalculateOctive(1, 2);
           break;
 
@@ -856,7 +916,7 @@ void IncreaseValue()
           if (Seq22Pitch > 127) {
             Seq22Pitch = 0;
           }
-          chordName2 = -1; //MODIFIED
+          baseChord2 = -1; //MODIFIED
           RecalculateOctive(2, 2);
           break;
 
@@ -865,7 +925,7 @@ void IncreaseValue()
           if (Seq32Pitch > 127) {
             Seq32Pitch = 0;
           }
-          chordName3 = -1; //MODIFIED
+          baseChord3 = -1; //MODIFIED
           RecalculateOctive(3, 2);
           break;
 
@@ -874,7 +934,7 @@ void IncreaseValue()
           if (Seq42Pitch > 127) {
             Seq42Pitch = 0;
           }
-          chordName4 = -1; //MODIFIED
+          baseChord4 = -1; //MODIFIED
           RecalculateOctive(4, 2);
           break;
       }
@@ -888,7 +948,7 @@ void IncreaseValue()
           if (Seq12Octive > 10) {
             Seq12Octive = 0;
           }
-          GenerateChord(); 
+          GenerateChord();
           break;
 
         case 2:
@@ -896,7 +956,7 @@ void IncreaseValue()
           if (Seq22Octive > 10) {
             Seq22Octive = 0;
           }
-          GenerateChord(); 
+          GenerateChord();
           break;
 
         case 3:
@@ -904,7 +964,7 @@ void IncreaseValue()
           if (Seq33Octive > 10) {
             Seq33Octive = 0;
           }
-          GenerateChord(); 
+          GenerateChord();
           break;
 
         case 4:
@@ -961,7 +1021,7 @@ void IncreaseValue()
           if (Seq13Pitch > 127) {
             Seq13Pitch = 0;
           }
-          chordName1 = -1; //MODIFIED
+          baseChord1 = -1; //MODIFIED
           RecalculateOctive(1, 3);
           break;
 
@@ -970,7 +1030,7 @@ void IncreaseValue()
           if (Seq23Pitch > 127) {
             Seq23Pitch = 0;
           }
-          chordName2 = -1; //MODIFIED
+          baseChord2 = -1; //MODIFIED
           RecalculateOctive(2, 3);
           break;
 
@@ -979,7 +1039,7 @@ void IncreaseValue()
           if (Seq33Pitch > 127) {
             Seq33Pitch = 0;
           }
-          chordName3 = -1; //MODIFIED
+          baseChord3 = -1; //MODIFIED
           RecalculateOctive(3, 3);
           break;
 
@@ -988,7 +1048,7 @@ void IncreaseValue()
           if (Seq43Pitch > 127) {
             Seq43Pitch = 0;
           }
-          chordName4 = -1; //MODIFIED
+          baseChord4 = -1; //MODIFIED
           RecalculateOctive(4, 3);
           break;
       }
@@ -1116,28 +1176,28 @@ void DecreaseValue()
         case 1:
           playMode1 -= 1;
           if (playMode1 < 0) {
-            playMode1 = maxPlayMode;
+            playMode1 = 8;
           }
           break;
 
         case 2:
           playMode2 -= 1;
           if (playMode2 < 0) {
-            playMode2 = maxPlayMode;
+            playMode2 = 8;
           }
           break;
 
         case 3:
           playMode3 -= 1;
           if (playMode3 < 0) {
-            playMode3 = maxPlayMode;
+            playMode3 = 8;
           }
           break;
 
         case 4:
           playMode4 -= 1;
           if (playMode4 < 0) {
-            playMode4 = maxPlayMode;
+            playMode4 = 8;
           }
           break;
       }
@@ -1190,7 +1250,7 @@ void DecreaseValue()
           if (Seq11Pitch < 0) {
             Seq11Pitch = 127;
           }
-          chordName1 = -1; //MODIFIED
+          baseChord1 = -1; //MODIFIED
           RecalculateOctive(1, 1);
           break;
 
@@ -1199,7 +1259,7 @@ void DecreaseValue()
           if (Seq21Pitch < 0) {
             Seq21Pitch = 127;
           }
-          chordName2 = -1; //MODIFIED
+          baseChord2 = -1; //MODIFIED
           RecalculateOctive(2, 1);
           break;
 
@@ -1208,7 +1268,7 @@ void DecreaseValue()
           if (Seq31Pitch < 0) {
             Seq31Pitch = 127;
           }
-          chordName3 = -1; //MODIFIED
+          baseChord3 = -1; //MODIFIED
           RecalculateOctive(3, 1);
           break;
 
@@ -1217,7 +1277,7 @@ void DecreaseValue()
           if (Seq41Pitch < 0) {
             Seq41Pitch = 127;
           }
-          chordName4 = -1; //MODIFIED
+          baseChord4 = -1; //MODIFIED
           RecalculateOctive(4, 1);
           break;
       }
@@ -1303,7 +1363,7 @@ void DecreaseValue()
           if (Seq12Pitch < 0) {
             Seq12Pitch = 127;
           }
-          chordName1 = -1; //MODIFIED
+          baseChord1 = -1; //MODIFIED
           RecalculateOctive(1, 2);
           break;
 
@@ -1312,7 +1372,7 @@ void DecreaseValue()
           if (Seq22Pitch < 0) {
             Seq22Pitch = 127;
           }
-          chordName2 = -1; //MODIFIED
+          baseChord2 = -1; //MODIFIED
           RecalculateOctive(2, 2);
           break;
 
@@ -1321,7 +1381,7 @@ void DecreaseValue()
           if (Seq32Pitch < 0) {
             Seq32Pitch = 127;
           }
-          chordName3 = -1; //MODIFIED
+          baseChord3 = -1; //MODIFIED
           RecalculateOctive(3, 2);
           break;
 
@@ -1330,7 +1390,7 @@ void DecreaseValue()
           if (Seq42Pitch < 0) {
             Seq42Pitch = 127;
           }
-          chordName4 = -1; //MODIFIED
+          baseChord4 = -1; //MODIFIED
           RecalculateOctive(4, 2);
           break;
       }
@@ -1417,7 +1477,7 @@ void DecreaseValue()
           if (Seq13Pitch < 0) {
             Seq13Pitch = 127;
           }
-          chordName1 = -1; //MODIFIED
+          baseChord1 = -1; //MODIFIED
           RecalculateOctive(1, 3);
           break;
 
@@ -1426,7 +1486,7 @@ void DecreaseValue()
           if (Seq23Pitch < 0) {
             Seq23Pitch = 127;
           }
-          chordName2 = -1; //MODIFIED
+          baseChord2 = -1; //MODIFIED
           RecalculateOctive(2, 3);
           break;
 
@@ -1435,7 +1495,7 @@ void DecreaseValue()
           if (Seq33Pitch < 0) {
             Seq33Pitch = 127;
           }
-          chordName3 = -1; //MODIFIED
+          baseChord3 = -1; //MODIFIED
           RecalculateOctive(3, 3);
           break;
 
@@ -1444,7 +1504,7 @@ void DecreaseValue()
           if (Seq43Pitch < 0) {
             Seq43Pitch = 127;
           }
-          chordName4 = -1; //MODIFIED
+          baseChord4 = -1; //MODIFIED
           RecalculateOctive(4, 3);
           break;
       }
@@ -1616,7 +1676,8 @@ void DisplayOnLcd()
     case 4:// - playMode1
       lcd.print("Play Mode: " + (String)activeSeq);
       lcd.setCursor(0, 1);
-      int tmpPlayMode = -1;
+      int tmpPlayMode;
+
       switch (activeSeq)
       {
         case 1:
@@ -1681,16 +1742,16 @@ void DisplayOnLcd()
       switch (activeSeq)
       {
         case 1:
-          lcd.print(GetChordName(baseChord1);
+          lcd.print((String)GetChordName(baseChord1));
           break;
         case 2:
-          lcd.print(GetChordName(baseChord2);
+          lcd.print((String)GetChordName(baseChord2));
           break;
         case 3:
-          lcd.print(GetChordName(baseChord3);
+          lcd.print((String)GetChordName(baseChord3));
           break;
         case 4:
-          lcd.print(GetChordName(baseChord4);
+          lcd.print((String)GetChordName(baseChord4));
           break;
       }
       break;
@@ -1699,7 +1760,25 @@ void DisplayOnLcd()
       lcd.print("Sequence 1");
       lcd.setCursor(0, 1);
       for (uint8_t i = 0; i < 16; i++) {
-        outStr = (String)bitRead( randomKey1, i ) + outStr;
+        switch (activeSeq)
+        {
+          case 1:
+            ////outStr = (String)bitRead(Seq11, i ) + outStr;
+            outStr = (String)Seq11[i] + outStr;
+            break;
+          case 2:
+            //outStr = (String)bitRead(Seq21, i ) + outStr;
+            outStr = (String)Seq21[i] + outStr;
+            break;
+          case 3:
+            //outStr = (String)bitRead(Seq31, i ) + outStr;
+            outStr = (String)Seq31[i] + outStr;
+            break;
+          case 4:
+            //outStr = (String)bitRead(Seq41, i ) + outStr;
+            outStr = (String)Seq41[i] + outStr;
+            break;
+        }
       }
       lcd.print(outStr);
       break;
@@ -1707,67 +1786,196 @@ void DisplayOnLcd()
     case 7:// - Seq11Pitch
       lcd.print("Sequence 1");
       lcd.setCursor(0, 1);
-      lcd.print("Pitch: " + (String)Seq11Pitch);
+      lcd.print("Pitch: " + (String)GetSequencePitch(1));
       break;
 
     case 8:// - Seq1Octive
       lcd.print("Sequence 1");
       lcd.setCursor(0, 1);
-      lcd.print("Octive: " + (String)Seq11Octive);
+      lcd.print("Octive: " + (String)GetSequenceOctive(1));
       break;
 
     case 9:// - Seq11Velocity
       lcd.print("Sequence 1");
       lcd.setCursor(0, 1);
-      lcd.print("Velocity: " + (String)Seq11Velocity);
+      lcd.print("Velocity: " + (String)GetSequenceVelocity(1));
       break;
 
 
-
-
-    case 12:// - Seq12Pitch
-      lcd.print("Sequence 2");
-      lcd.setCursor(0, 1);
-      lcd.print("Pitch: " + (String)Seq12Pitch);
-      break;
-
-    case 13:// - Seq2Octive
-      lcd.print("Sequence 2");
-      lcd.setCursor(0, 1);
-      lcd.print("Octive: " + (String)Seq12Octive);
-      break;
-
-    case 14:// - Seq12Velocity
-      lcd.print("Sequence 2");
-      lcd.setCursor(0, 1);
-      lcd.print("Velocity: " + (String)Seq12Velocity);
-      break;
-
-    case 16:// - randomSeq3
-      lcd.print("Sequence 3");
+    case 10:// - randomSeq2
+      lcd.print("Sequence 1");
       lcd.setCursor(0, 1);
       for (uint8_t i = 0; i < 16; i++) {
-        //outStr = (String)bitRead( randomKey3, i ) + outStr;
+        switch (activeSeq)
+        {
+          case 1:
+            //outStr = (String)bitRead(Seq12, i ) + outStr;
+            outStr = (String)Seq12[i] + outStr;
+            break;
+          case 2:
+            //outStr = (String)bitRead(Seq22, i ) + outStr;
+            outStr = (String)Seq22[i] + outStr;
+            break;
+          case 3:
+            //outStr = (String)bitRead(Seq32, i ) + outStr;
+            outStr = (String)Seq32[i] + outStr;
+            break;
+          case 4:
+            //outStr = (String)bitRead(Seq42, i ) + outStr;
+            outStr = (String)Seq42[i] + outStr;
+            break;
+        }
       }
       lcd.print(outStr);
       break;
 
-    case 17:// - Seq13Pitch
-      lcd.print("Sequence 3");
+
+    case 11:// - Seq2 Pitch
+      lcd.print("Sequence 2");
       lcd.setCursor(0, 1);
-      lcd.print("Pitch: " + (String)Seq13Pitch);
+      switch (activeSeq)
+      {
+        case 1:
+          lcd.print("Pitch: " + (String)Seq11Pitch);
+          break;
+        case 2:
+          lcd.print("Pitch: " + (String)Seq21Pitch);
+          break;
+        case 3:
+          lcd.print("Pitch: " + (String)Seq31Pitch);
+          break;
+        case 4:
+          lcd.print("Pitch: " + (String)Seq41Pitch);
+          break;
+      }
       break;
 
-    case 18:// - Seq3Octive
-      lcd.print("Sequence 3");
+    case 12:// - Seq2Octive
+      lcd.print("Sequence 2");
       lcd.setCursor(0, 1);
-      lcd.print("Octive: " + (String)Seq13Octive);
+      switch (activeSeq)
+      {
+        case 1:
+          lcd.print("Octive: " + (String)Seq12Octive);
+          break;
+        case 2:
+          lcd.print("Octive: " + (String)Seq22Octive);
+          break;
+        case 3:
+          lcd.print("Octive: " + (String)Seq32Octive);
+          break;
+        case 4:
+          lcd.print("Octive: " + (String)Seq42Octive);
+          break;
+      }
       break;
 
-    case 19:// - Seq13Velocity
+    case 13:// - Seq2 Velocity
+      lcd.print("Sequence 2");
+      lcd.setCursor(0, 1);
+      switch (activeSeq)
+      {
+        case 1:
+          lcd.print("Velocity: " + (String)Seq12Velocity);
+          break;
+        case 2:
+          lcd.print("Velocity: " + (String)Seq22Velocity);
+          break;
+        case 3:
+          lcd.print("Velocity: " + (String)Seq32Velocity);
+          break;
+        case 4:
+          lcd.print("Velocity: " + (String)Seq42Velocity);
+          break;
+      }
+      break;
+
+    case 14:// - randomSeq3
       lcd.print("Sequence 3");
       lcd.setCursor(0, 1);
-      lcd.print("Velocity: " + (String)Seq13Velocity);
+      for (uint8_t i = 0; i < 16; i++) {
+        switch (activeSeq)
+        {
+          case 1:
+            //outStr = (String)bitRead(Seq13, i ) + outStr;
+            outStr = (String)Seq13[i] + outStr;
+            break;
+          case 2:
+            //outStr = (String)bitRead(Seq23, i ) + outStr;
+            outStr = (String)Seq23[i] + outStr;
+            break;
+          case 3:
+            //outStr = (String)bitRead(Seq33, i ) + outStr;
+            outStr = (String)Seq33[i] + outStr;
+            break;
+          case 4:
+            //outStr = (String)bitRead(Seq43, i ) + outStr;
+            outStr = (String)Seq43[i] + outStr;
+            break;
+        }
+      }
+      lcd.print(outStr);
+      break;
+
+
+    case 15:// - Seq3 Pitch
+      lcd.print("Sequence 3");
+      lcd.setCursor(0, 1);
+      switch (activeSeq)
+      {
+        case 1:
+          lcd.print("Pitch: " + (String)Seq13Pitch);
+          break;
+        case 2:
+          lcd.print("Pitch: " + (String)Seq23Pitch);
+          break;
+        case 3:
+          lcd.print("Pitch: " + (String)Seq33Pitch);
+          break;
+        case 4:
+          lcd.print("Pitch: " + (String)Seq43Pitch);
+          break;
+      }
+      break;
+
+    case 16:// - Seq3Octive
+      lcd.print("Sequence 3");
+      lcd.setCursor(0, 1);
+      switch (activeSeq)
+      {
+        case 1:
+          lcd.print("Octive: " + (String)Seq13Octive);
+          break;
+        case 2:
+          lcd.print("Octive: " + (String)Seq23Octive);
+          break;
+        case 3:
+          lcd.print("Octive: " + (String)Seq33Octive);
+          break;
+        case 4:
+          lcd.print("Octive: " + (String)Seq43Octive);
+          break;
+      }
+      break;
+
+    case 17:// - Seq3Velocity
+      lcd.print("Sequence 3");
+      lcd.setCursor(0, 1);
+      switch (activeSeq)
+      {
+        case 1:
+          lcd.print("Velocity: " + (String)Seq13Velocity);
+          break;
+        case 2:
+          lcd.print("Velocity: " + (String)Seq23Velocity);
+          break;
+        case 3:
+          lcd.print("Velocity: " + (String)Seq33Velocity);
+          break;
+        case 4:
+          lcd.print("Velocity: " + (String)Seq43Velocity);
+          break;
+      }
       break;
   }
 }
@@ -2178,7 +2386,7 @@ void SetDiminished(int basePitch)
 
 void GenerateChord()
 {
-  String currentChord;
+  int currentChord;
   switch (activeSeq)
   {
     case 1:
@@ -2401,6 +2609,7 @@ String GetChordName(int chordValue)
 {
   switch (chordValue)
   {
+    case -1: return "Modified";
     case 0: return "C Major";
     case 1: return "C# Major";
     case 2: return "D Major";
