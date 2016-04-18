@@ -128,7 +128,7 @@ int noteLength = 1;
 
 
 /*
-  -1 FreeMemory
+  -1 Copy From / To
   0 midiChannel
   1 noteLength
   2 bpmTempo
@@ -149,10 +149,25 @@ int noteLength = 1;
   17 Octive3
   18 Velocity3
 */
-
 int currentScreen = 0;
 //int maxScreen = 19;
 bool updateScreen = true;
+
+/*
+   1 12
+   2 13
+   3 14
+   4 21
+   5 23
+   6 24
+   7 31
+   8 32
+   9 34
+   10 41
+   11 42
+   12 43
+*/
+int copyFromTo = 1;
 
 bool buttonDown = false;
 unsigned long currentMillis;
@@ -568,7 +583,6 @@ int GetSequenceOctive(int seqNumber)
   }
 }
 
-
 int GetSequenceVelocity(int seqNumber)
 {
   switch (activeSeq)
@@ -677,7 +691,13 @@ void IncreaseValue()
 
   switch (currentScreen)
   {
-    //case -1 FreeMemory
+    case -1: // CopyFromTo
+      copyFromTo += 1;
+      if (copyFromTo > 4) {
+        copyFromTo = 1;
+      }
+      break;
+
     case 0: // midiChannel
       midiChannel += 1;
       if (midiChannel > 127) {
@@ -1133,7 +1153,12 @@ void DecreaseValue()
 
   switch (currentScreen)
   {
-    //case -1 FreeMemory
+    case -1: // CopyFromTo
+      copyFromTo -= 1;
+      if (copyFromTo < 1) {
+        copyFromTo = 4;
+      }
+      break;
     case 0: // midiChannel
       midiChannel -= 1;
       if (midiChannel < 0) {
@@ -1589,10 +1614,109 @@ void SelectValue()
 {
   switch (currentScreen)
   {
+    case -1: // Copy From To
+      switch (activeSeq)
+      {
+        case 1:
+          switch (copyFromTo)
+          {
+            case 2:
+              memcpy(Seq21, Seq11, 16);
+              memcpy(Seq22, Seq12, 16);
+              memcpy(Seq23, Seq13, 16);
+              break;
+            case 3:
+              memcpy(Seq31, Seq11, 16);
+              memcpy(Seq32, Seq12, 16);
+              memcpy(Seq33, Seq13, 16);
+              break;
+            case 4:
+              memcpy(Seq41, Seq11, 16);
+              memcpy(Seq42, Seq12, 16);
+              memcpy(Seq43, Seq13, 16);
+              break;
+          }
+        case 2:
+          switch (copyFromTo)
+          {
+            case 1:
+              memcpy(Seq11, Seq21, 16);
+              memcpy(Seq12, Seq22, 16);
+              memcpy(Seq13, Seq23, 16);
+              break;
+
+            case 3:
+              memcpy(Seq31, Seq21, 16);
+              memcpy(Seq32, Seq22, 16);
+              memcpy(Seq33, Seq23, 16);
+              break;
+            case 4:
+              memcpy(Seq41, Seq21, 16);
+              memcpy(Seq42, Seq22, 16);
+              memcpy(Seq43, Seq23, 16);
+              break;
+          }
+        case 3:
+          switch (copyFromTo)
+          {
+            case 1:
+              memcpy(Seq21, Seq31, 16);
+              memcpy(Seq22, Seq32, 16);
+              memcpy(Seq23, Seq33, 16);
+              break;
+
+            case 2:
+              memcpy(Seq21, Seq31, 16);
+              memcpy(Seq22, Seq32, 16);
+              memcpy(Seq23, Seq33, 16);
+              break;
+
+            case 4:
+              memcpy(Seq41, Seq31, 16);
+              memcpy(Seq42, Seq32, 16);
+              memcpy(Seq43, Seq33, 16);
+              break;
+          }
+        case 4:
+          switch (copyFromTo)
+          {
+            case 1:
+              memcpy(Seq11, Seq41, 16);
+              memcpy(Seq12, Seq42, 16);
+              memcpy(Seq13, Seq43, 16);
+              break;
+
+            case 2:
+              memcpy(Seq21, Seq41, 16);
+              memcpy(Seq22, Seq42, 16);
+              memcpy(Seq23, Seq43, 16);
+              break;
+
+            case 3:
+              memcpy(Seq31, Seq41, 16);
+              memcpy(Seq32, Seq42, 16);
+              memcpy(Seq33, Seq43, 16);
+              break;
+          }
+      }
+      break;
+
     case 4: // playMode - RESET MIDI
       for (int i = 0; i <= 127; i++) {
         MIDI.sendNoteOff(i, 0, midiChannel);
       }
+      break;
+
+    case 6: // playMode - SEQ 1
+      GenerateNewSequence(activeSeq, 1);
+      break;
+
+    case 10: // playMode - SEQ 2
+      GenerateNewSequence(activeSeq, 2);
+      break;
+
+    case 14: // playMode - SEQ 3
+      GenerateNewSequence(activeSeq, 3);
       break;
   }
 }
@@ -1607,10 +1731,10 @@ void DisplayOnLcd()
   lcd.setCursor(0, 0);
   switch (currentScreen)
   {
-    case -1: // FreeMemory
-      lcd.print("System");
+    case -1: // Copy From And To
+      lcd.print("Copy From - To");
       lcd.setCursor(0, 1);
-      lcd.print("Mem: " + (String)FreeRam());
+      lcd.print("      " + (String)activeSeq + "     " + (String)copyFromTo);
       break;
 
     case 0:// midiChannel
@@ -1727,19 +1851,15 @@ void DisplayOnLcd()
         switch (activeSeq)
         {
           case 1:
-            ////outStr = (String)bitRead(Seq11, i ) + outStr;
             outStr = (String)Seq11[i] + outStr;
             break;
           case 2:
-            //outStr = (String)bitRead(Seq21, i ) + outStr;
             outStr = (String)Seq21[i] + outStr;
             break;
           case 3:
-            //outStr = (String)bitRead(Seq31, i ) + outStr;
             outStr = (String)Seq31[i] + outStr;
             break;
           case 4:
-            //outStr = (String)bitRead(Seq41, i ) + outStr;
             outStr = (String)Seq41[i] + outStr;
             break;
         }
@@ -1772,19 +1892,15 @@ void DisplayOnLcd()
         switch (activeSeq)
         {
           case 1:
-            //outStr = (String)bitRead(Seq12, i ) + outStr;
             outStr = (String)Seq12[i] + outStr;
             break;
           case 2:
-            //outStr = (String)bitRead(Seq22, i ) + outStr;
             outStr = (String)Seq22[i] + outStr;
             break;
           case 3:
-            //outStr = (String)bitRead(Seq32, i ) + outStr;
             outStr = (String)Seq32[i] + outStr;
             break;
           case 4:
-            //outStr = (String)bitRead(Seq42, i ) + outStr;
             outStr = (String)Seq42[i] + outStr;
             break;
         }
@@ -1818,26 +1934,21 @@ void DisplayOnLcd()
         switch (activeSeq)
         {
           case 1:
-            //outStr = (String)bitRead(Seq13, i ) + outStr;
             outStr = (String)Seq13[i] + outStr;
             break;
           case 2:
-            //outStr = (String)bitRead(Seq23, i ) + outStr;
             outStr = (String)Seq23[i] + outStr;
             break;
           case 3:
-            //outStr = (String)bitRead(Seq33, i ) + outStr;
             outStr = (String)Seq33[i] + outStr;
             break;
           case 4:
-            //outStr = (String)bitRead(Seq43, i ) + outStr;
             outStr = (String)Seq43[i] + outStr;
             break;
         }
       }
       lcd.print(outStr);
       break;
-
 
     case 15:// - Seq3 Pitch
       lcd.print("Sequence 3");
@@ -1854,7 +1965,7 @@ void DisplayOnLcd()
     case 17:// - Seq3Velocity
       lcd.print("Sequence 3");
       lcd.setCursor(0, 1);
-      lcd.print("Velocity: " + (String)GetSequenceVelocity(4));
+      lcd.print("Velocity: " + (String)GetSequenceVelocity(3));
       break;
   }
 }
