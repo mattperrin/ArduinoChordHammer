@@ -171,9 +171,7 @@ void setup()
   MIDI.begin();
   Serial.begin(115200);
 
-
   GenerateAllNewSequences();
-
 
   lcd.clear();
   lcd.begin(16, 2);
@@ -185,7 +183,11 @@ void setup()
   baseChord3 = 0;
   baseChord4 = 0;
 
-  GenerateChord();
+  for (int i = 4; i >= 1; i--)
+  {
+    activeSeq = i;
+    GenerateChord();
+  }
 
   sixteenInterval = (60000 / bpmTempo) / noteLength;
   delay(1000);
@@ -1062,7 +1064,7 @@ void IncreaseValue()
           if (Seq13Octive > 10) {
             Seq13Octive = 0;
           }
-          //GenerateChord(1); //SHOULD THIS HAVE ARGU?
+          GenerateChord();
           break;
 
         case 2:
@@ -1070,7 +1072,7 @@ void IncreaseValue()
           if (Seq23Octive > 10) {
             Seq23Octive = 0;
           }
-          //GenerateChord(2); //SHOULD THIS HAVE ARGU?
+          GenerateChord();
           break;
 
         case 3:
@@ -1078,7 +1080,7 @@ void IncreaseValue()
           if (Seq33Octive > 10) {
             Seq33Octive = 0;
           }
-          //GenerateChord(3); //SHOULD THIS HAVE ARGU?
+          GenerateChord();
           break;
 
         case 4:
@@ -1086,7 +1088,7 @@ void IncreaseValue()
           if (Seq43Octive > 10) {
             Seq43Octive = 0;
           }
-          //GenerateChord(4); //SHOULD THIS HAVE ARGU?
+          GenerateChord();
           break;
       }
       break;
@@ -1587,47 +1589,9 @@ void SelectValue()
 {
   switch (currentScreen)
   {
-    case 3: //ActiveSequence - Reset the loop to zero
-      {
-        intervalCounter = 0;
-      }
-
-
     case 4: // playMode - RESET MIDI
-
-      switch (activeSeq)
-      {
-        case 1:
-          if (playMode1 == 0) {
-            for (int i = 0; i <= 127; i++) {
-              MIDI.sendNoteOff(i, 0, midiChannel);
-            }
-          }
-          break;
-
-        case 2:
-          if (playMode2 == 0) {
-            for (int i = 0; i <= 127; i++) {
-              MIDI.sendNoteOff(i, 0, midiChannel);
-            }
-          }
-          break;
-
-        case 3:
-          if (playMode3 == 0) {
-            for (int i = 0; i <= 127; i++) {
-              MIDI.sendNoteOff(i, 0, midiChannel);
-            }
-          }
-          break;
-
-        case 4:
-          if (playMode4 == 0) {
-            for (int i = 0; i <= 127; i++) {
-              MIDI.sendNoteOff(i, 0, midiChannel);
-            }
-          }
-          break;
+      for (int i = 0; i <= 127; i++) {
+        MIDI.sendNoteOff(i, 0, midiChannel);
       }
       break;
   }
@@ -1889,6 +1853,7 @@ void DisplayOnLcd()
 
     case 17:// - Seq3Velocity
       lcd.print("Sequence 3");
+      lcd.setCursor(0, 1);
       lcd.print("Velocity: " + (String)GetSequenceVelocity(4));
       break;
   }
